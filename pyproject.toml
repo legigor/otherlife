@@ -1,0 +1,7 @@
+[project]
+name = "otherlife"
+version = "0.1.0"
+description = "Another Conway's Game of Life implementation"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
