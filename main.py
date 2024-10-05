@@ -12,6 +12,8 @@ COLOR_CELL = (125, 100, 255)
 SCROLL_SPEED = 3
 ZOOM_SPEED = 0.1
 
+TURN_DELAY_MS = 1000
+
 CELL_SIZE = 10
 UVX_DIR = 1
 UVY_DIR = -1
@@ -86,21 +88,6 @@ class Board:
                 0.9 * self.__cell_size() // 2,
             )
 
-    def draw_cell(self, cell_x, cell_y, cell_size, width, height):
-        pygame.draw.line(
-            self.__screen,
-            COLOR_LINE,
-            (cell_x - cell_size // 2, 0),
-            (cell_x - cell_size // 2, height),
-        )
-
-        pygame.draw.line(
-            self.__screen,
-            COLOR_LINE,
-            (0, cell_y - cell_size // 2),
-            (width, cell_y - cell_size // 2),
-        )
-
     def move(self, dx, dy):
         self.__dx += dx * SCROLL_SPEED
         self.__dy -= dy * SCROLL_SPEED
@@ -110,6 +97,21 @@ class Board:
             self.__zoom_factor += ZOOM_SPEED
         else:
             self.__zoom_factor = max(self.__zoom_factor - ZOOM_SPEED, 3 / CELL_SIZE)
+
+
+class Game1:
+    def __init__(self):
+        self.__state = [(0, 0), (1, 1), (2, 2), (2, 3), (2, 4), (2, 5)]
+
+    def get_state(self):
+        return self.__state
+
+    def turn(self):
+        new_state = []
+        for c in self.__state:
+            i, j = c
+            new_state.append((-j, i))
+        self.__state = new_state
 
 
 def render_text(text, font, color, surface, x, y):
@@ -129,8 +131,12 @@ def main():
     font = pygame.font.SysFont(None, 16)
 
     board = Board(screen)
+    game = Game1()
 
+    time_since_last_turn = 0
     while True:
+        dt = clock.tick(240)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -142,14 +148,18 @@ def main():
                 else:
                     board.move(event.x, event.y)
 
-        board.draw([(0, 0), (1, 1), (2, 2), (2, 3), (2, 4), (2, 5)])
+        board.draw(game.get_state())
+
+        time_since_last_turn += dt
+        if time_since_last_turn >= TURN_DELAY_MS:
+            game.turn()
+            time_since_last_turn = 0
 
         fps = clock.get_fps()
         text = f"fps: {int(fps)}"
         render_text(text, font, (0, 0, 0), screen, 10, 10)
 
         pygame.display.flip()
-        clock.tick(240)
 
 
 if __name__ == "__main__":
