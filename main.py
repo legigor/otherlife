@@ -106,15 +106,10 @@ class Board:
         self.__dy -= dy * SCROLL_SPEED
 
     def zoom(self, y):
-        zs = self.__zoom_factor
         if y < 0:
             self.__zoom_factor += ZOOM_SPEED
         else:
             self.__zoom_factor = max(self.__zoom_factor - ZOOM_SPEED, 3 / CELL_SIZE)
-        print(f"zoom factor: {zs} -> {self.__zoom_factor}")
-
-    def zoom_factor(self):
-        return self.__zoom_factor
 
 
 def render_text(text, font, color, surface, x, y):
@@ -150,7 +145,7 @@ def main():
         board.draw([(0, 0), (1, 1), (2, 2), (2, 3), (2, 4), (2, 5)])
 
         fps = clock.get_fps()
-        text = f"fps: {int(fps)}\nzoom factor: {board.zoom_factor()}"
+        text = f"fps: {int(fps)}"
         render_text(text, font, (0, 0, 0), screen, 10, 10)
 
         pygame.display.flip()
