@@ -10,6 +10,7 @@ COLOR_LINE = (225, 223, 178)
 COLOR_CELL = (125, 100, 255)
 
 SCROLL_SPEED = 3
+ZOOM_SPEED = 0.1
 
 CELL_SIZE = 10
 UVX_DIR = 1
@@ -19,20 +20,24 @@ UVY_DIR = -1
 class Board:
     __dx = 0
     __dy = 0
+    __zoom_factor = 1.0
 
     def __init__(self, screen):
         self.__screen = screen
 
+    def __cell_size(self):
+        return max(1, int(CELL_SIZE * self.__zoom_factor))
+
     def transform_to_cell(self, uv, x, y):
         uvx, uvy = uv
-        i = UVX_DIR * (x + self.__dx - uvx) // CELL_SIZE
-        j = UVY_DIR * (y + self.__dy - uvy) // CELL_SIZE
+        i = UVX_DIR * (x + self.__dx - uvx) // self.__cell_size()
+        j = UVY_DIR * (y + self.__dy - uvy) // self.__cell_size()
         return i, j
 
     def transform_to_screen(self, uv, i, j):
         uvx, uvy = uv
-        x = (uvx + UVX_DIR * i * CELL_SIZE) - self.__dx
-        y = (uvy + UVY_DIR * j * CELL_SIZE) - self.__dy
+        x = (uvx + UVX_DIR * i * self.__cell_size()) - self.__dx
+        y = (uvy + UVY_DIR * j * self.__cell_size()) - self.__dy
         return x, y
 
     @staticmethod
@@ -60,16 +65,16 @@ class Board:
             pygame.draw.line(
                 self.__screen,
                 COLOR_LINE,
-                (x - CELL_SIZE // 2, 0),
-                (x - CELL_SIZE // 2, height),
+                (x - self.__cell_size() // 2, 0),
+                (x - self.__cell_size() // 2, height),
             )
         for j in rj:
             x, y = self.transform_to_screen(uv, 0, j)
             pygame.draw.line(
                 self.__screen,
                 COLOR_LINE,
-                (0, y - CELL_SIZE // 2),
-                (width, y - CELL_SIZE // 2),
+                (0, y - self.__cell_size() // 2),
+                (width, y - self.__cell_size() // 2),
             )
 
         for c in cells:
@@ -78,7 +83,7 @@ class Board:
                 self.__screen,
                 COLOR_CELL,
                 (x, y),
-                0.9 * CELL_SIZE // 2,
+                0.9 * self.__cell_size() // 2,
             )
 
     def draw_cell(self, cell_x, cell_y, cell_size, width, height):
@@ -100,6 +105,24 @@ class Board:
         self.__dx += dx * SCROLL_SPEED
         self.__dy -= dy * SCROLL_SPEED
 
+    def zoom(self, y):
+        zs = self.__zoom_factor
+        if y < 0:
+            self.__zoom_factor += ZOOM_SPEED
+        else:
+            self.__zoom_factor = max(self.__zoom_factor - ZOOM_SPEED, 3 / CELL_SIZE)
+        print(f"zoom factor: {zs} -> {self.__zoom_factor}")
+
+    def zoom_factor(self):
+        return self.__zoom_factor
+
+
+def render_text(text, font, color, surface, x, y):
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        text_surface = font.render(line, True, color)
+        surface.blit(text_surface, (x, y + i * font.get_linesize()))
+
 
 def main():
     pygame.init()
@@ -108,7 +131,7 @@ def main():
 
     screen = pygame.display.set_mode(WINDOW_SIZE, pygame.RESIZABLE)
     clock = pygame.time.Clock()
-    font = pygame.font.SysFont(None, 36)
+    font = pygame.font.SysFont(None, 16)
 
     board = Board(screen)
 
@@ -118,13 +141,17 @@ def main():
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.MOUSEWHEEL:
-                board.move(event.x, event.y)
+                mods = pygame.key.get_mods()
+                if mods & pygame.KMOD_CTRL:
+                    board.zoom(event.y)
+                else:
+                    board.move(event.x, event.y)
 
         board.draw([(0, 0), (1, 1), (2, 2), (2, 3), (2, 4), (2, 5)])
 
         fps = clock.get_fps()
-        fps_text = font.render(f"FPS: {int(fps)}", True, pygame.Color("black"))
-        screen.blit(fps_text, (10, 10))
+        text = f"fps: {int(fps)}\nzoom factor: {board.zoom_factor()}"
+        render_text(text, font, (0, 0, 0), screen, 10, 10)
 
         pygame.display.flip()
         clock.tick(240)
