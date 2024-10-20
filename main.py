@@ -2,6 +2,8 @@ import sys
 
 import pygame
 
+from gameoflife import GameOfLife
+
 WINDOW_SIZE = (800, 600)
 WINDOW_CAPTION = "Other Life"
 
@@ -12,7 +14,7 @@ COLOR_CELL = (125, 100, 255)
 SCROLL_SPEED = 3
 ZOOM_SPEED = 0.1
 
-TURN_DELAY_MS = 1000
+TURN_DELAY_MS = 100
 
 CELL_SIZE = 10
 UVX_DIR = 1
@@ -99,21 +101,6 @@ class Board:
             self.__zoom_factor = max(self.__zoom_factor - ZOOM_SPEED, 3 / CELL_SIZE)
 
 
-class Game1:
-    def __init__(self):
-        self.__state = [(0, 0), (1, 1), (2, 2), (2, 3), (2, 4), (2, 5)]
-
-    def get_state(self):
-        return self.__state
-
-    def turn(self):
-        new_state = []
-        for c in self.__state:
-            i, j = c
-            new_state.append((-j, i))
-        self.__state = new_state
-
-
 def render_text(text, font, color, surface, x, y):
     lines = text.splitlines()
     for i, line in enumerate(lines):
@@ -131,7 +118,7 @@ def main():
     font = pygame.font.SysFont(None, 16)
 
     board = Board(screen)
-    game = Game1()
+    game = GameOfLife([(0, 1), (1, 0), (1, -1), (0, -1), (-1, -1)])
 
     time_since_last_turn = 0
     while True:

@@ -5,3 +5,8 @@ description = "Another Conway's Game of Life implementation"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = ["pygame>=2.6.1"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.3.3",
+]
